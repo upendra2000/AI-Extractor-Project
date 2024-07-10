@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Data Extractor</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        form { background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        label, select, input { display: block; margin-bottom: 10px; }
+        input[type="submit"] { background: #4CAF50; color: white; padding: 10px 15px; border: none; cursor: pointer; }
+        #result { background: #e9e9e9; padding: 20px; border-radius: 8px; white-space: pre-wrap; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>AI Data Extractor</h1>
+    <form id="extractForm">
+        {% csrf_token %}
+        <label for="model_name">Select Model:</label>
+        <select name="model_name" id="model_name" required>
+            <option value="gpt2">GPT-2</option>
+            <option value="tinyllama">TinyLlama</option>
+        </select>
+        
+        <label for="file">Upload File:</label>
+        <input type="file" name="file" id="file" required>
+        
+        <input type="submit" value="Extract Data">
+    </form>
+
+    <div id="loading" class="hidden">Processing... Please wait.</div>
+    <div id="result" class="hidden"></div>
+
+    <script>
+        document.getElementById('extractForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            var formData = new FormData(this);
+            var resultDiv = document.getElementById('result');
+            var loadingDiv = document.getElementById('loading');
+            var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+            resultDiv.classList.add('hidden');
+            loadingDiv.classList.remove('hidden');
+        
+            fetch('{% url "extract_data" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingDiv.classList.add('hidden');
+                resultDiv.classList.remove('hidden');
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                loadingDiv.classList.add('hidden');
+                resultDiv.classList.remove('hidden');
+                resultDiv.textContent = 'Error: ' + error;
+            });
+        });
+    </script>
+</body>
+</html>
+
